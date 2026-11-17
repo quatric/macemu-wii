@@ -56,6 +56,12 @@ extern const char *plat_app_dir(void);
 extern const char *const *plat_roots(const char *const **labels);
 /* Default RAM size in MB */
 extern int plat_default_ram_mb(void);
+/* A 64 KB aligned block for the Mac's RAM, never freed: want bytes, or less
+   in steps of step down to min if that is all there is room for; *got is
+   the size. On the Wii it comes from the top of MEM2 outside malloc, which
+   so keeps using MEM1 first (malloc moves to MEM2 for good the first time
+   a block does not fit in MEM1). */
+extern void *plat_alloc_ram(uint32 want, uint32 min, uint32 step, uint32 *got);
 /* Pump system events; false once the console asks the app to quit
    (power button, the Wii U's ProcUI) */
 extern bool plat_poll_system(void);

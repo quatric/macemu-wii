@@ -117,7 +117,28 @@ const char *const *plat_roots(const char *const **labels)
 
 int plat_default_ram_mb(void)
 {
+#ifdef SHEEPSHAVER
+	return 64;		// as much as fits (about 44 MB): Mac OS 9 wants more than 32
+#endif
 	return 32;
+}
+
+void *plat_alloc_ram(uint32 want, uint32 min, uint32 step, uint32 *got)
+{
+	// MEM2 left for malloc once MEM1 is full and for the IOS heaps
+	// (networking, USB)
+	const uint32 keep = 4 << 20;
+	uint32 lo = (uint32)SYS_GetArena2Lo(), hi = (uint32)SYS_GetArena2Hi() & ~0xffff;
+	uint32 room = hi > lo + keep ? hi - lo - keep : 0;
+	uint32 size = want;
+	while (size > room && size >= min + step)
+		size -= step;
+	*got = 0;
+	if (size > room || size < min)
+		return NULL;
+	SYS_SetArena2Hi((void *)(hi - size));
+	*got = size;
+	return (void *)(hi - size);
 }
 
 bool plat_poll_system(void)

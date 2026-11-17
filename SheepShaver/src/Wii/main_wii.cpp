@@ -283,6 +283,9 @@ static void xpram_watchdog(void)
    most frequent program counters (68k pc, or PowerPC pc | 1 in native code)
    sampled since the last line, to find where Mac OS spends its time */
 extern uint32 ppc_debug_reg(int n);
+#if defined(GEKKO) && !defined(__WIIU__)
+#include <ogc/system.h>
+#endif
 struct pc_count { uint32 pc, n; };
 static pc_count pc_hist[1024];
 
@@ -309,10 +312,18 @@ static void debug_log(void)
 	FILE *f = fopen(path, seconds ? "a" : "w");
 	if (f == NULL)
 		return;
-	fprintf(f, "%4d pc %08x lr %08x r1 %08x 68k pc %08x mode %u irqnest %d flags %x ticks %u\n",
+	// CurApName (0x910): the application in front, a Pascal string
+	char app[32];
+	int len = ReadMacInt8(0x910) < 32 ? ReadMacInt8(0x910) : 0;
+	for (int i = 0; i < len; i++) {
+		char c = ReadMacInt8(0x911 + i);
+		app[i] = c >= 32 && c < 127 ? c : '?';
+	}
+	app[len] = 0;
+	fprintf(f, "%4d pc %08x lr %08x r1 %08x 68k pc %08x mode %u irqnest %d flags %x ticks %u app %s\n",
 		seconds++, ppc_debug_reg(-1), ppc_debug_reg(32), ppc_debug_reg(1), ppc_debug_reg(24),
 		ReadMacInt32(XLM_RUN_MODE), (int)ReadMacInt32(XLM_IRQ_NEST),
-		InterruptFlags, ReadMacInt32(0x16a));
+		InterruptFlags, ReadMacInt32(0x16a), app);
 	uint32 total = 0;
 	for (int i = 0; i < 1024; i++)
 		total += pc_hist[i].n;
@@ -329,6 +340,26 @@ static void debug_log(void)
 	}
 	fprintf(f, "\n");
 	memset(pc_hist, 0, sizeof(pc_hist));
+	if (seconds % 30 == 1) {
+		// the largest block still free, to size the RAM and the reserve
+		uint32 largest = 0;
+		void *at = NULL;
+		for (uint32 size = 64 << 20; size >= 256 << 10; size -= 256 << 10) {
+			void *p = malloc(size);
+			if (p) {
+				free(p);
+				largest = size;
+				at = p;
+				break;
+			}
+		}
+		fprintf(f, "     RAM %u KB at %p, largest free block %u KB at %p\n",
+			RAMSize >> 10, RAMBaseHost, largest >> 10, at);
+#if defined(GEKKO) && !defined(__WIIU__)
+		fprintf(f, "     arena1 %p-%p arena2 %p-%p\n", SYS_GetArena1Lo(), SYS_GetArena1Hi(),
+			SYS_GetArena2Lo(), SYS_GetArena2Hi());
+#endif
+	}
 	fclose(f);
 }
 #endif
@@ -631,13 +662,13 @@ int main(int argc, char **argv)
 		RAMSize = 8 * 1024 * 1024;
 	}
 	RAMBase = 0;
-	while ((RAMBaseHost = alloc_region(RAMBase, RAMSize)) == NULL) {
-		if (RAMSize <= 8 * 1024 * 1024) {
-			ErrorAlert(GetString(STR_NOT_ENOUGH_MEMORY_ERR));
-			Quit();
-		}
-		RAMSize -= 4 * 1024 * 1024;
+	RAMBaseHost = (uint8 *)plat_alloc_ram(RAMSize, 8 << 20, 1 << 20, &RAMSize);
+	if (RAMBaseHost == NULL) {
+		ErrorAlert(GetString(STR_NOT_ENOUGH_MEMORY_ERR));
+		Quit();
 	}
+	memset(RAMBaseHost, 0, RAMSize);
+	map_region(RAMBase, RAMSize, RAMBaseHost);
 
 	// ROM
 	ROMBase = ROM_BASE;

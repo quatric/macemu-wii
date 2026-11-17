@@ -25,6 +25,7 @@
 #include <coreinit/foreground.h>
 #include <vpad/input.h>
 #include <sys/stat.h>
+#include <malloc.h>
 
 #include <wiiuupdate.h>
 #include <wiiosk_sdl.h>
@@ -83,6 +84,16 @@ int plat_default_ram_mb(void)
 	return 128;		// Mac OS 9 likes room
 #endif
 	return 64;
+}
+
+void *plat_alloc_ram(uint32 want, uint32 min, uint32 step, uint32 *got)
+{
+	uint32 size = want;
+	void *p;
+	while ((p = memalign(1 << 16, size)) == NULL && size >= min + step)
+		size -= step;
+	*got = p ? size : 0;
+	return p;
 }
 
 bool plat_poll_system(void)

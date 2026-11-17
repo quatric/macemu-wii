@@ -47,9 +47,12 @@ the PRAM to `xpram`.
 
 * Basilisk II defaults to a Quadra 900 with a 68040, 32 MB of RAM on the
   Wii and 64 MB on the Wii U, a 640x480 screen in 256 colours.
-* SheepShaver defaults to 32 MB of RAM on the Wii and 128 MB on the Wii U,
-  a 640x480 screen in 256 colours. Mac OS 8.6 and 9 want at least 32 MB;
-  on the Wii there is no room for much more. Networking is off.
+* SheepShaver defaults to as much RAM as the Wii has room for (47 MB) and
+  128 MB on the Wii U, a 640x480 screen in 256 colours. Networking is off.
+  With 32 MB Mac OS 9 says there is not enough memory and starts without
+  its extensions; a `ramsize` the Wii has no room for is lowered to what
+  fits, so a prefs file from an older version can just say `ramsize
+  67108864`.
 
 ## Controls
 
@@ -101,11 +104,11 @@ old world ROM and small applications are the most usable. The Wii U's CPU
 is clocked about 70% higher (1.24 GHz) and should be faster to match,
 but that is untested. For 68k software, Basilisk II is much faster.
 
-Tested so far: with the New World `Mac OS ROM` file SheepShaver starts Mac
-OS on the Wii (in Dolphin, at Wii speed) and reaches the flashing "?"
-floppy about 3 seconds after the app starts, as desktop SheepShaver does
-without a startup disk. Booting Mac OS from a disk image has not been tried
-yet, and neither has the Wii U build on a console.
+Tested so far, on the Wii in Dolphin: with the New World `Mac OS ROM` file
+and a Mac OS 9 hard disk image, SheepShaver starts up with all the
+extensions and reaches the Finder in about 3 minutes of Wii time (without a
+disk, the flashing "?" floppy shows after about 3 seconds). The Wii U build
+has not been tried on a console yet.
 
 ## Updates
 
