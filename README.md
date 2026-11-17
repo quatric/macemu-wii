@@ -1,3 +1,12 @@
+# macemu-wii: Basilisk II for the Wii and Wii U
+
+This fork of [macemu](https://github.com/cebix/macemu) adds a port of
+**Basilisk II** to the Nintendo **Wii** (Homebrew Channel) and **Wii U**
+(Aroma): Wii Remote, GamePad and USB keyboard and mouse controls, a
+Wii-style text keyboard on the + button
+([libwiiosk](https://github.com/quatric/libwiiosk)) and in-app updates.
+See [wii/README.md](wii/README.md).
+
 # Basilisk II and SheepShaver
 
 This repository contains the **Basilisk II** and **SheepShaver** projects.

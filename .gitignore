@@ -6,3 +6,12 @@
 
 # Mac OS X metadata
 *.DS_Store
+
+# Wii and Wii U builds
+wii/build/
+wii/dist/
+wii/*.dol
+wiiu/build/
+wiiu/dist/
+wiiu/*.rpx
+wiiu/*.wuhb

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+	<name>@NAME@</name>
+	<version>@VERSION@</version>
+	<release_date>@DATE@</release_date>
+	<short_description>68k Macintosh emulator</short_description>
+	<long_description>Basilisk II emulating a 68040 Macintosh (Quadra 900) with colour, sound, CD-ROM images and up to 32 MB of RAM. Runs Mac OS 7.x to 8.1.
+
+Put the ROM of a Mac II, IIci, Quadra 650/700/900 etc. in sd:/apps/@FOLDER@/ (as ROM or name.rom) along with your disk images (.dsk, .img, .hfv; .iso for CDs).
+
+Wii Remote: point and press A or B to use the mouse, D-Pad for arrow keys, 1 = command, 2 = option, + = type text with the Wii keyboard, - = display mode, HOME = menu. Nunchuk, Classic Controller, GameCube pads and USB keyboards and mice work too.</long_description>
+	<ahb_access/>
+</app>
