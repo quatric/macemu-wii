@@ -714,6 +714,18 @@ inline void sheepshaver_cpu::get_resource(uint32 old_get_resource)
 // PowerPC CPU emulator
 static sheepshaver_cpu *ppc_cpu = NULL;
 
+#ifdef PPC_DEBUG_HOOKS
+// For a port's debug log: n < 0 is the pc, 32 the lr, else gpr n
+uint32 ppc_debug_reg(int n)
+{
+	if (ppc_cpu == NULL)
+		return 0;
+	int id = n < 0 ? powerpc_registers::PC : n == 32 ? powerpc_registers::LR
+		: powerpc_registers::GPR(n);
+	return ppc_cpu->get_register(id).i;
+}
+#endif
+
 void FlushCodeCache(uintptr start, uintptr end)
 {
 	D(bug("FlushCodeCache(%08x, %08x)\n", start, end));

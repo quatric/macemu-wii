@@ -21,7 +21,8 @@
  *    0x68ff0000  kernel data (at 0x68ffe000)
  *    0x69000000  DR cache
  *    0xa0000000  frame buffer (video_wii.cpp)
- *  Anything else reads and writes one scratch page.
+ *  Anything else reads as zeros and ignores writes, as in SheepShaver's
+ *  reserved 4 GB address space on 64-bit hosts.
  */
 
 #include "sysdeps.h"
@@ -102,7 +103,8 @@ extern void exit_emul_ppc(void);
  *  The Mac address space: 64 KB pages, each pointing into a host block
  */
 
-uintptr vm_page_diff[1 << (32 - VM_PAGE_BITS)];
+uintptr vm_page_diff[1 << (32 - VM_PAGE_BITS)];		// reads
+uintptr vm_page_diff_w[1 << (32 - VM_PAGE_BITS)];	// writes
 
 struct mac_region {
 	uint32 mac;
@@ -112,7 +114,8 @@ struct mac_region {
 static const int MAX_REGIONS = 16;
 static mac_region regions[MAX_REGIONS];
 static int num_regions = 0;
-static uint8 *scratch_page = NULL;
+static uint8 *zero_page_host = NULL;	// unmapped memory reads this...
+static uint8 *scratch_page = NULL;		// ...and writes this
 
 static void map_pages(uint32 mac, uint32 size, uint8 *host)
 {
@@ -122,7 +125,7 @@ static void map_pages(uint32 mac, uint32 size, uint8 *host)
 	uint32 page_mac = first << VM_PAGE_BITS;
 	uint8 *page_host = host - (mac - page_mac);
 	for (uint32 p = first; p <= last; p++, page_mac += page_size, page_host += page_size)
-		vm_page_diff[p] = (uintptr)page_host - page_mac;
+		vm_page_diff[p] = vm_page_diff_w[p] = (uintptr)page_host - page_mac;
 }
 
 /* Back Mac addresses mac..mac+size with the host memory `host` */
@@ -150,8 +153,10 @@ static uint8 *alloc_region(uint32 mac, uint32 size)
 static void unmap_region(uint32 mac, uint32 size)
 {
 	const uint32 page_size = 1 << VM_PAGE_BITS;
-	for (uint32 a = mac & ~(page_size - 1); a < mac + size; a += page_size)
-		vm_page_diff[a >> VM_PAGE_BITS] = (uintptr)scratch_page - a;
+	for (uint32 a = mac & ~(page_size - 1); a < mac + size; a += page_size) {
+		vm_page_diff[a >> VM_PAGE_BITS] = (uintptr)zero_page_host - a;
+		vm_page_diff_w[a >> VM_PAGE_BITS] = (uintptr)scratch_page - a;
+	}
 	for (int i = 0; i < num_regions; i++)
 		if (regions[i].mac == mac) {
 			regions[i] = regions[--num_regions];
@@ -161,12 +166,15 @@ static void unmap_region(uint32 mac, uint32 size)
 
 static bool vm_table_init(void)
 {
-	// Unmapped Mac memory all reads and writes one scratch page
+	// Unmapped Mac memory reads a page of zeros, writes go to a scratch page
+	zero_page_host = (uint8 *)vm_acquire(1 << VM_PAGE_BITS);
 	scratch_page = (uint8 *)vm_acquire(1 << VM_PAGE_BITS);
-	if (scratch_page == VM_MAP_FAILED)
+	if (zero_page_host == VM_MAP_FAILED || scratch_page == VM_MAP_FAILED)
 		return false;
-	for (uint32 p = 0; p < (1u << (32 - VM_PAGE_BITS)); p++)
-		vm_page_diff[p] = (uintptr)scratch_page - (p << VM_PAGE_BITS);
+	for (uint32 p = 0; p < (1u << (32 - VM_PAGE_BITS)); p++) {
+		vm_page_diff[p] = (uintptr)zero_page_host - (p << VM_PAGE_BITS);
+		vm_page_diff_w[p] = (uintptr)scratch_page - (p << VM_PAGE_BITS);
+	}
 	return true;
 }
 
@@ -268,11 +276,71 @@ static void xpram_watchdog(void)
 	}
 }
 
+#ifdef WII_DEBUG_LOG
+/* Debug builds (make -f sheepshaver.mk
+   EXTRA_CFLAGS="-DWII_DEBUG_LOG -DPPC_DEBUG_HOOKS") write debug.txt in the
+   app folder once a second: where the PowerPC is, the Mac's state and the
+   most frequent program counters (68k pc, or PowerPC pc | 1 in native code)
+   sampled since the last line, to find where Mac OS spends its time */
+extern uint32 ppc_debug_reg(int n);
+struct pc_count { uint32 pc, n; };
+static pc_count pc_hist[1024];
+
+static void debug_sample(void)
+{
+	uint32 pc = ReadMacInt32(XLM_RUN_MODE) == MODE_68K ? ppc_debug_reg(24) : ppc_debug_reg(-1) | 1;
+	uint32 h = (pc * 2654435761u) >> 22;
+	for (int i = 0; i < 8; i++) {
+		pc_count &c = pc_hist[(h + i) & 1023];
+		if (c.pc == pc || c.n == 0) {
+			c.pc = pc;
+			c.n++;
+			return;
+		}
+	}
+}
+
+static void debug_log(void)
+{
+	static int seconds = 0;
+	char path[768];
+	snprintf(path, sizeof(path), "%sdebug.txt", plat_app_dir());
+	// open and close each time: libfat only writes the card on close
+	FILE *f = fopen(path, seconds ? "a" : "w");
+	if (f == NULL)
+		return;
+	fprintf(f, "%4d pc %08x lr %08x r1 %08x 68k pc %08x mode %u irqnest %d flags %x ticks %u\n",
+		seconds++, ppc_debug_reg(-1), ppc_debug_reg(32), ppc_debug_reg(1), ppc_debug_reg(24),
+		ReadMacInt32(XLM_RUN_MODE), (int)ReadMacInt32(XLM_IRQ_NEST),
+		InterruptFlags, ReadMacInt32(0x16a));
+	uint32 total = 0;
+	for (int i = 0; i < 1024; i++)
+		total += pc_hist[i].n;
+	fprintf(f, "     %u samples:", total);
+	for (int k = 0; k < 10; k++) {
+		int best = -1;
+		for (int i = 0; i < 1024; i++)
+			if (pc_hist[i].n && (best < 0 || pc_hist[i].n > pc_hist[best].n))
+				best = i;
+		if (best < 0)
+			break;
+		fprintf(f, " %08x:%u", pc_hist[best].pc, pc_hist[best].n);
+		pc_hist[best].n = 0;
+	}
+	fprintf(f, "\n");
+	memset(pc_hist, 0, sizeof(pc_hist));
+	fclose(f);
+}
+#endif
+
 static void one_tick(void)
 {
 	static int tick_counter = 0;
 	if (++tick_counter > 60) {
 		tick_counter = 0;
+#ifdef WII_DEBUG_LOG
+		debug_log();
+#endif
 
 		// Pseudo Mac 1Hz interrupt, update local time
 		WriteMacInt32(0x20c, TimerDateTime());
@@ -299,7 +367,12 @@ static void one_tick(void)
 
 void ppc_do_check_ticks(void)
 {
+	if (zero_page_host[0] | zero_page_host[0xfffc])
+		memset(zero_page_host, 0, 1 << VM_PAGE_BITS);
 	ppc_tick_countdown = TICK_CHECK_BLOCKS;
+#ifdef WII_DEBUG_LOG
+	debug_sample();
+#endif
 	uint64 now = GetTicks_usec();
 	if (next_tick == 0)
 		next_tick = now;

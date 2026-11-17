@@ -77,6 +77,19 @@ uint64 GetTicks_usec(void)
 	return plat_usec();
 }
 
+#ifdef SHEEPSHAVER
+/* SheepShaver's PowerPC time base (UpTime) counts from here, so that, as on
+   a real Mac, it starts near zero instead of at the console clock's epoch */
+uint64 GetTimebase_usec(void)
+{
+	static uint64 start = 0;
+	uint64 now = plat_usec();
+	if (start == 0)
+		start = now - 1000000;
+	return now - start;
+}
+#endif
+
 void Delay_usec(uint32 usec)
 {
 	plat_sleep_usec(usec);

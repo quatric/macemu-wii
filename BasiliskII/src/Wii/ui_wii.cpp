@@ -158,7 +158,11 @@ static void show_toast(const char *s)
 
 static bool toast_visible(void)
 {
-	return (int32)(toast_until - plat_frame()) > 0;
+	// (the frame counter starts anywhere, so an unused toast is checked
+	// by its text, not its time)
+	if (toast_text[0] && (int32)(toast_until - plat_frame()) <= 0)
+		toast_text[0] = 0;
+	return toast_text[0] != 0;
 }
 
 static bool ui_pauses_mac(void)

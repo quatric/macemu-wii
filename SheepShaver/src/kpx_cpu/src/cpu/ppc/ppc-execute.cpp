@@ -1218,7 +1218,12 @@ static inline uint64 get_tb_ticks(void)
 	uint64 ticks;
 #ifdef SHEEPSHAVER
 	const uint32 TBFreq = TimebaseSpeed;
+#ifdef HAVE_GETTIMEBASE_USEC
+	extern uint64 GetTimebase_usec(void);
+	ticks = muldiv64(GetTimebase_usec(), TBFreq, 1000000);
+#else
 	ticks = muldiv64(GetTicks_usec(), TBFreq, 1000000);
+#endif
 #else
 	const uint32 TBFreq = 25 * 1000 * 1000; // 25 MHz
 	ticks = muldiv64((uint64)clock(), TBFreq, CLOCKS_PER_SEC);

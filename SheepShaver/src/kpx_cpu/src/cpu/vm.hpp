@@ -207,11 +207,19 @@ const uintptr VMBaseDiff = NATMEM_OFFSET;
 // host block: for hosts that cannot map memory at fixed addresses (game
 // consoles). vm_page_diff[] holds host block - Mac page start, so a page
 // can be backed by any host memory and two pages by the same memory.
+// Writes go through their own table, vm_page_diff_w[]: it differs only
+// for unmapped memory, which reads as zeros (one page that stays zero)
+// and swallows writes (a scratch page), as a reserved address space would.
 const int VM_PAGE_BITS = 16;
 extern uintptr vm_page_diff[1 << (32 - VM_PAGE_BITS)];
+extern uintptr vm_page_diff_w[1 << (32 - VM_PAGE_BITS)];
 static inline uint8 * vm_do_get_real_address(vm_addr_t addr)
 {
 	return (uint8 *)(vm_page_diff[(uint32)addr >> VM_PAGE_BITS] + (uint32)addr);
+}
+static inline uint8 * vm_do_get_real_address_w(vm_addr_t addr)
+{
+	return (uint8 *)(vm_page_diff_w[(uint32)addr >> VM_PAGE_BITS] + (uint32)addr);
 }
 extern vm_addr_t vm_do_get_virtual_address(uint8 *addr);
 #elif REAL_ADDRESSING || DIRECT_ADDRESSING
@@ -223,6 +231,7 @@ static inline vm_addr_t vm_do_get_virtual_address(uint8 *addr)
 {
 	return vm_wrap_address((uintptr)addr - VMBaseDiff);
 }
+#define vm_do_get_real_address_w vm_do_get_real_address
 #endif
 
 #if REAL_ADDRESSING || DIRECT_ADDRESSING || TABLE_ADDRESSING
@@ -259,38 +268,38 @@ static inline uint32 vm_read_memory_4_reversed(vm_addr_t addr)
 }
 static inline void vm_write_memory_1(vm_addr_t addr, uint32 value)
 {
-	uint8 * const m = vm_do_get_real_address(addr);
+	uint8 * const m = vm_do_get_real_address_w(addr);
 	vm_do_write_memory_1(m, value);
 }
 static inline void vm_write_memory_2(vm_addr_t addr, uint32 value)
 {
-	uint16 * const m = (uint16 *)vm_do_get_real_address(addr);
+	uint16 * const m = (uint16 *)vm_do_get_real_address_w(addr);
 	vm_do_write_memory_2(m, value);
 }
 static inline void vm_write_memory_4(vm_addr_t addr, uint32 value)
 {
-	uint32 * const m = (uint32 *)vm_do_get_real_address(addr);
+	uint32 * const m = (uint32 *)vm_do_get_real_address_w(addr);
 	vm_do_write_memory_4(m, value);
 }
 static inline void vm_write_memory_8(vm_addr_t addr, uint64 value)
 {
-	uint64 * const m = (uint64 *)vm_do_get_real_address(addr);
+	uint64 * const m = (uint64 *)vm_do_get_real_address_w(addr);
 	vm_do_write_memory_8(m, value);
 }
 #define vm_write_memory_1_reversed vm_write_memory_1
 static inline void vm_write_memory_2_reversed(vm_addr_t addr, uint32 value)
 {
-	uint16 * const m = (uint16 *)vm_do_get_real_address(addr);
+	uint16 * const m = (uint16 *)vm_do_get_real_address_w(addr);
 	vm_do_write_memory_2_reversed(m, value);
 }
 static inline void vm_write_memory_4_reversed(vm_addr_t addr, uint32 value)
 {
-	uint32 * const m = (uint32 *)vm_do_get_real_address(addr);
+	uint32 * const m = (uint32 *)vm_do_get_real_address_w(addr);
 	vm_do_write_memory_4_reversed(m, value);
 }
 static inline void *vm_memset(vm_addr_t addr, int c, size_t n)
 {
-	uint8 * const m = (uint8 *)vm_do_get_real_address(addr);
+	uint8 * const m = (uint8 *)vm_do_get_real_address_w(addr);
 	return memset(m, c, n);
 }
 #ifdef __cplusplus
@@ -300,12 +309,12 @@ static inline void *vm_memcpy(void *dest, vm_addr_t src, size_t n)
 }
 static inline void *vm_memcpy(vm_addr_t dest, const void *src, size_t n)
 {
-	return memcpy(vm_do_get_real_address(dest), src, n);
+	return memcpy(vm_do_get_real_address_w(dest), src, n);
 }
 #endif
 static inline void *vm_memcpy(vm_addr_t dest, vm_addr_t src, size_t n)
 {
-	return memcpy(vm_do_get_real_address(dest), vm_do_get_real_address(src), n);
+	return memcpy(vm_do_get_real_address_w(dest), vm_do_get_real_address(src), n);
 }
 #endif
 

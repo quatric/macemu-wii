@@ -101,6 +101,12 @@ old world ROM and small applications are the most usable. The Wii U's CPU
 is clocked about 70% higher (1.24 GHz) and should be faster to match,
 but that is untested. For 68k software, Basilisk II is much faster.
 
+Tested so far: with the New World `Mac OS ROM` file SheepShaver starts Mac
+OS on the Wii (in Dolphin, at Wii speed) and reaches the flashing "?"
+floppy about 3 seconds after the app starts, as desktop SheepShaver does
+without a startup disk. Booting Mac OS from a disk image has not been tried
+yet, and neither has the Wii U build on a console.
+
 ## Updates
 
 On the Wii, [libwiiupdate](https://github.com/quatric/libwiiupdate) checks
@@ -128,6 +134,15 @@ make -C wiiu dist    # Wii U zips in wiiu/dist/
 `make -f sheepshaver.mk` in either folder builds SheepShaver alone. With
 `EXTRA_CFLAGS=-DTEST_PPC` SheepShaver runs a short PowerPC interpreter
 test instead of the Mac and shows its speed.
+
+With `EXTRA_CFLAGS="-DWII_DEBUG_LOG -DPPC_DEBUG_HOOKS"` SheepShaver writes
+`debug.txt` in its folder once a second: where the PowerPC is, the Mac's
+tick count and the most frequent program counters.
+
+**Testing in Dolphin:** set Graphics > Hacks > Texture Cache Accuracy to
+*Safe*. At the default (*Fast*) Dolphin only checks a sample of a
+texture's pixels for changes and misses small updates of the Mac screen
+(the pointer, an icon, a line of text). The real consoles always show them.
 
 libwiiinput, libwiiupdate and libwiiosk (Wii) and libwiiuinput and
 libwiiuupdate (Wii U) are git submodules; the Wii U build uses the Wii's

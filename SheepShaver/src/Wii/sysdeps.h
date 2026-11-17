@@ -174,6 +174,7 @@ static inline int spin_trylock(spinlock_t *lock) { (void)lock; return 1; }
 
 /* Timing functions */
 extern uint64 GetTicks_usec(void);
+#define HAVE_GETTIMEBASE_USEC 1		/* the time base starts near zero */
 extern void Delay_usec(uint32 usec);
 
 /* Macintosh colour */
