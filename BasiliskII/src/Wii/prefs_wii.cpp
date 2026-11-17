@@ -17,6 +17,9 @@
 prefs_desc platform_prefs_items[] = {
 	{"displaymode", TYPE_INT32, false,  "0 = fill the screen, 1 = keep aspect, 2 = integer scale"},
 	{"smoothing", TYPE_BOOLEAN, false,  "smooth the scaled Mac screen"},
+#ifdef SHEEPSHAVER
+	{"displaycolordepth", TYPE_INT32, false, "display color depth"},
+#endif
 	{NULL, TYPE_END, false, NULL} // End of list
 };
 
@@ -99,6 +102,16 @@ void SaveDisplayPrefs(void)
 
 void AddPlatformPrefsDefaults(void)
 {
+#ifdef SHEEPSHAVER
+	PrefsReplaceInt32("ramsize", plat_default_ram_mb() * 1024 * 1024);
+	PrefsReplaceInt32("frameskip", 2);	// 30 screen updates a second
+	PrefsReplaceString("screen", "win/640/480");
+	PrefsAddInt32("displaycolordepth", 8);
+	PrefsReplaceBool("nonet", true);
+	PrefsAddInt32("displaymode", 1);
+	PrefsAddBool("smoothing", true);
+	return;
+#endif
 	// A Quadra-class Mac: most ROMs people have (Quadra 650/700/900, IIci)
 	// boot Mac OS 7.x to 8.1 like this
 	PrefsReplaceInt32("ramsize", plat_default_ram_mb() * 1024 * 1024);
@@ -111,3 +124,14 @@ void AddPlatformPrefsDefaults(void)
 	PrefsAddInt32("displaymode", 1);
 	PrefsAddBool("smoothing", true);
 }
+
+#ifdef SHEEPSHAVER
+/* SheepShaver's system specific prefs setup: nothing to do */
+void prefs_init(void)
+{
+}
+
+void prefs_exit(void)
+{
+}
+#endif

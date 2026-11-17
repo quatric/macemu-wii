@@ -202,7 +202,19 @@ const uintptr VMBaseDiff = NATMEM_OFFSET;
 #define vm_wrap_address(ADDR) (ADDR)
 #endif
 
-#if REAL_ADDRESSING || DIRECT_ADDRESSING
+#if TABLE_ADDRESSING
+// The Mac address space is mapped in 64 KB pages, each pointing into a
+// host block: for hosts that cannot map memory at fixed addresses (game
+// consoles). vm_page_diff[] holds host block - Mac page start, so a page
+// can be backed by any host memory and two pages by the same memory.
+const int VM_PAGE_BITS = 16;
+extern uintptr vm_page_diff[1 << (32 - VM_PAGE_BITS)];
+static inline uint8 * vm_do_get_real_address(vm_addr_t addr)
+{
+	return (uint8 *)(vm_page_diff[(uint32)addr >> VM_PAGE_BITS] + (uint32)addr);
+}
+extern vm_addr_t vm_do_get_virtual_address(uint8 *addr);
+#elif REAL_ADDRESSING || DIRECT_ADDRESSING
 static inline uint8 * vm_do_get_real_address(vm_addr_t addr)
 {
 	return (uint8 *)vm_wrap_address(VMBaseDiff + addr);
@@ -211,6 +223,9 @@ static inline vm_addr_t vm_do_get_virtual_address(uint8 *addr)
 {
 	return vm_wrap_address((uintptr)addr - VMBaseDiff);
 }
+#endif
+
+#if REAL_ADDRESSING || DIRECT_ADDRESSING || TABLE_ADDRESSING
 static inline uint32 vm_read_memory_1(vm_addr_t addr)
 {
 	uint8 * const m = vm_do_get_real_address(addr);

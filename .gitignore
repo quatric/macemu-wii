@@ -9,9 +9,11 @@
 
 # Wii and Wii U builds
 wii/build/
+wii/build-ss/
 wii/dist/
 wii/*.dol
 wiiu/build/
+wiiu/build-ss/
 wiiu/dist/
 wiiu/*.rpx
 wiiu/*.wuhb

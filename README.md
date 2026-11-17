@@ -1,7 +1,8 @@
-# macemu-wii: Basilisk II for the Wii and Wii U
+# macemu-wii: Basilisk II and SheepShaver for the Wii and Wii U
 
-This fork of [macemu](https://github.com/cebix/macemu) adds a port of
-**Basilisk II** to the Nintendo **Wii** (Homebrew Channel) and **Wii U**
+This fork of [macemu](https://github.com/cebix/macemu) ports **Basilisk II**
+(68k Macs, System 7 to Mac OS 8.1) and **SheepShaver** (PowerPC Macs, Mac OS
+7.5.2 to 9.0.4) to the Nintendo **Wii** (Homebrew Channel) and **Wii U**
 (Aroma): Wii Remote, GamePad and USB keyboard and mouse controls, a
 Wii-style text keyboard on the + button
 ([libwiiosk](https://github.com/quatric/libwiiosk)) and in-app updates.

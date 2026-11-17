@@ -37,6 +37,13 @@
 #ifndef UPDATE_REPO
 #define UPDATE_REPO "macemu-wii"
 #endif
+#ifndef UPDATE_ASSET
+#ifdef SHEEPSHAVER
+#define UPDATE_ASSET "SheepShaver"
+#else
+#define UPDATE_ASSET "BasiliskII"
+#endif
+#endif
 #ifndef APP_FOLDER
 #define APP_FOLDER "BasiliskIIWii"
 #endif
@@ -480,6 +487,8 @@ void plat_update_start(void)
 	static const char *const update_files[] = { "boot.dol", "meta.xml", "icon.png", NULL };
 	WIIUPDATE_SetAppPath(app_path);
 	WIIUPDATE_SetUpdateFiles(update_files);
+	// one release carries Basilisk II and SheepShaver: only take our zip
+	WIIUPDATE_SetAssetName(UPDATE_ASSET);
 	WIIUPDATE_Start(UPDATE_OWNER, UPDATE_REPO, APP_VERSION);
 }
 

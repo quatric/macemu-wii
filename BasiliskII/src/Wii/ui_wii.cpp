@@ -43,7 +43,11 @@
 #include "debug.h"
 
 #ifndef APP_TITLE
+#ifdef SHEEPSHAVER
+#define APP_TITLE "SheepShaver"
+#else
 #define APP_TITLE "Basilisk II"
+#endif
 #endif
 #ifndef APP_VERSION
 #define APP_VERSION "1.0.0"
@@ -1096,7 +1100,9 @@ enum {
 	MENU_SMOOTHING,
 	MENU_TYPE,
 	MENU_KEYS,
+#ifndef SHEEPSHAVER		// SheepShaver has no programmer's switch
 	MENU_INTERRUPT,
+#endif
 	MENU_QUIT,
 	MENU_RESUME,
 	NUM_MENU_ITEMS
@@ -1129,11 +1135,13 @@ static void menu_item_text(int i, char *buf, size_t n)
 	case MENU_KEYS:
 		snprintf(buf, n, "%s Mac keyboard (special keys)", keys_visible ? "Hide" : "Show");
 		break;
+#ifndef SHEEPSHAVER
 	case MENU_INTERRUPT:
 		snprintf(buf, n, "Interrupt (programmer's switch)");
 		break;
+#endif
 	case MENU_QUIT:
-		snprintf(buf, n, "Quit Basilisk II");
+		snprintf(buf, n, "Quit " APP_TITLE);
 		break;
 	default:
 		snprintf(buf, n, "Resume");
@@ -1190,10 +1198,12 @@ static void menu_activate(void)
 			keys_visible = true;
 		menu_close();
 		break;
+#ifndef SHEEPSHAVER
 	case MENU_INTERRUPT:
 		menu_close();
 		TriggerNMI();
 		break;
+#endif
 	case MENU_QUIT:
 		menu_close();
 		quit_wanted = true;

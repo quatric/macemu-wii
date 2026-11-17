@@ -41,6 +41,13 @@
 #ifndef UPDATE_REPO
 #define UPDATE_REPO "macemu-wii"
 #endif
+#ifndef UPDATE_ASSET
+#ifdef SHEEPSHAVER
+#define UPDATE_ASSET "SheepShaver"
+#else
+#define UPDATE_ASSET "BasiliskII"
+#endif
+#endif
 #ifndef APP_FOLDER
 #define APP_FOLDER "BasiliskIIWiiU"
 #endif
@@ -72,6 +79,9 @@ const char *const *plat_roots(const char *const **labels)
 
 int plat_default_ram_mb(void)
 {
+#ifdef SHEEPSHAVER
+	return 128;		// Mac OS 9 likes room
+#endif
 	return 64;
 }
 
@@ -299,6 +309,8 @@ static bool update_started = false;
 
 void plat_update_start(void)
 {
+	// one release carries Basilisk II and SheepShaver: only take our zip
+	WIIUUPDATE_SetAssetName(UPDATE_ASSET);
 	WIIUUPDATE_Start(UPDATE_OWNER, UPDATE_REPO, APP_VERSION);
 	update_started = true;
 }

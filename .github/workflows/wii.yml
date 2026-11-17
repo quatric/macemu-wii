@@ -11,8 +11,8 @@ permissions:
 
 env:
   # The in-app updaters (libwiiupdate, libwiiuupdate) check the releases of
-  # the repository they were built from. Each release carries the Wii and
-  # the Wii U zip; each updater only takes its own.
+  # the repository they were built from. Each release carries Basilisk II and
+  # SheepShaver for the Wii and the Wii U; each app only takes its own zip.
   UPDATE_OWNER: ${{ github.repository_owner }}
   UPDATE_REPO: ${{ github.event.repository.name }}
 
@@ -28,10 +28,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Install zip, a host compiler and wiiu-sdl2
+      - name: Install zip, perl, a host compiler and wiiu-sdl2
         run: |
           apt-get update -qq
-          apt-get install -y -qq --no-install-recommends zip gcc g++ libc6-dev
+          apt-get install -y -qq --no-install-recommends zip perl gcc g++ libc6-dev
           # the image usually ships it already
           if [ "${{ matrix.console }}" = wiiu ]; then
             dkp-pacman -Q wiiu-sdl2 || dkp-pacman -Sy --noconfirm --needed wiiu-sdl2
@@ -80,27 +80,31 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: Basilisk II Wii (latest)
+          name: macemu Wii (latest)
           prerelease: false
           make_latest: true
           fail_on_unmatched_files: true
           body: |
-            Latest build of Basilisk II for the Wii and Wii U from ${{ github.sha }}.
+            Latest build of Basilisk II and SheepShaver for the Wii and Wii U from ${{ github.sha }}.
 
-            Wii: extract BasiliskIIWii-*-hbc.zip to the root of your SD card or USB drive, put a Mac ROM (as ROM or name.rom) and your disk images in sd:/apps/BasiliskIIWii/ and open it from the Homebrew Channel.
+            Wii: extract BasiliskIIWii-*-hbc.zip or SheepShaverWii-*-hbc.zip to the root of your SD card or USB drive and open it from the Homebrew Channel. Basilisk II wants a 68k Mac ROM (as ROM or name.rom) and your disk images in sd:/apps/BasiliskIIWii/; SheepShaver wants the "Mac OS ROM" file of Mac OS 8.6 to 9.0.4 (or a 4 MB old world ROM) and your disk images in sd:/apps/SheepShaverWii/.
 
-            Wii U (Aroma): extract BasiliskIIWiiU-*-wiiu.zip to the root of your SD card, put the ROM and disk images in sd:/wiiu/apps/BasiliskIIWiiU/ and open it from the Wii U Menu.
+            Wii U (Aroma): extract BasiliskIIWiiU-*-wiiu.zip or SheepShaverWiiU-*-wiiu.zip to the root of your SD card, put the ROM and disk images in sd:/wiiu/apps/BasiliskIIWiiU/ or sd:/wiiu/apps/SheepShaverWiiU/ and open it from the Wii U Menu.
+
+            SheepShaver interprets the PowerPC (no JIT is possible on these consoles), so Mac OS 8.6 and 9 run slowly. See wii/README.md.
           files: out/*.zip
       - name: Publish tagged release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          name: Basilisk II Wii ${{ github.ref_name }}
+          name: macemu Wii ${{ github.ref_name }}
           make_latest: true
           generate_release_notes: true
           fail_on_unmatched_files: true
           body: |
-            Wii: extract BasiliskIIWii-*-hbc.zip to the root of your SD card or USB drive, put a Mac ROM (as ROM or name.rom) and your disk images in sd:/apps/BasiliskIIWii/ and open it from the Homebrew Channel.
+            Wii: extract BasiliskIIWii-*-hbc.zip or SheepShaverWii-*-hbc.zip to the root of your SD card or USB drive and open it from the Homebrew Channel. Basilisk II wants a 68k Mac ROM (as ROM or name.rom) and your disk images in sd:/apps/BasiliskIIWii/; SheepShaver wants the "Mac OS ROM" file of Mac OS 8.6 to 9.0.4 (or a 4 MB old world ROM) and your disk images in sd:/apps/SheepShaverWii/.
 
-            Wii U (Aroma): extract BasiliskIIWiiU-*-wiiu.zip to the root of your SD card, put the ROM and disk images in sd:/wiiu/apps/BasiliskIIWiiU/ and open it from the Wii U Menu.
+            Wii U (Aroma): extract BasiliskIIWiiU-*-wiiu.zip or SheepShaverWiiU-*-wiiu.zip to the root of your SD card, put the ROM and disk images in sd:/wiiu/apps/BasiliskIIWiiU/ or sd:/wiiu/apps/SheepShaverWiiU/ and open it from the Wii U Menu.
+
+            SheepShaver interprets the PowerPC (no JIT is possible on these consoles), so Mac OS 8.6 and 9 run slowly. See wii/README.md.
           files: out/*.zip

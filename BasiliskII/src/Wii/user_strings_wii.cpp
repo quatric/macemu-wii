@@ -14,7 +14,11 @@
 
 // Platform-specific string definitions
 user_string_def platform_strings[] = {
+#ifdef SHEEPSHAVER
+	{STR_NO_AUDIO_WARN, "No sound output could be opened. SheepShaver runs without sound."},
+#else
 	{STR_NO_AUDIO_WARN, "No sound output could be opened. Basilisk II runs without sound."},
+#endif
 	{STR_NO_ROM_FOUND_ERR, "No Macintosh ROM was found."},
 	{STR_NO_XVISUAL_ERR, "No usable video mode."},
 	{-1, NULL}	// End marker

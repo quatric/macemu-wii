@@ -686,6 +686,10 @@ void powerpc_cpu::execute(uint32 entry)
 					} while (--n > 0);
 				}
 
+#ifdef PPC_CHECK_TICKS
+				// No timer thread: the host checks its clock between blocks
+				PPC_CHECK_TICKS();
+#endif
 				if (!spcflags().empty()) {
 					if (!check_spcflags())
 						goto return_site;
@@ -724,6 +728,9 @@ void powerpc_cpu::execute(uint32 entry)
 #if PPC_EXECUTE_DUMP_STATE
 		if (dump_state)
 			dump_registers();
+#endif
+#ifdef PPC_CHECK_TICKS
+		PPC_CHECK_TICKS();
 #endif
 		if (!spcflags().empty() && !check_spcflags())
 			goto return_site;

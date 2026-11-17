@@ -1,5 +1,5 @@
-# Basilisk II for the Wii U
+# Basilisk II and SheepShaver for the Wii U
 
-The Wii U build of Basilisk II (Aroma, `.wuhb`). It shares its code with
-the Wii build; see [the Wii and Wii U README](../wii/README.md) for
-installing, controls and building.
+The Wii U builds of Basilisk II and SheepShaver (Aroma, `.wuhb`). They share
+their code with the Wii builds; see [the Wii and Wii U README](../wii/README.md)
+for installing, controls and building.

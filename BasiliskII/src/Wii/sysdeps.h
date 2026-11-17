@@ -24,6 +24,12 @@
  *  (build68k, gencpu), so it uses no console headers.
  */
 
+/* The SheepShaver build compiles the shared files in this folder too:
+   they take its definitions (a quoted include finds this file first) */
+#ifdef SHEEPSHAVER_BUILD
+#include "../../../SheepShaver/src/Wii/sysdeps.h"
+#else
+
 #ifndef SYSDEPS_H
 #define SYSDEPS_H
 
@@ -174,3 +180,5 @@ static inline uae_u32 do_byteswap_16(uae_u32 v)
 #define REGPARAM2
 
 #endif
+
+#endif /* SHEEPSHAVER_BUILD */

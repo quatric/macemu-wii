@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+	<name>@NAME@</name>
+	<version>@VERSION@</version>
+	<release_date>@DATE@</release_date>
+	<short_description>PowerPC Macintosh emulator</short_description>
+	<long_description>SheepShaver emulating a PowerPC Macintosh with colour, sound and CD-ROM images. Runs Mac OS 7.5.2 to 9.0.4, slowly: the PowerPC is interpreted.
+
+Put the "Mac OS ROM" file from a Mac OS 8.6 to 9.0.4 System Folder (or a 4 MB old world ROM) in sd:/apps/@FOLDER@/ along with your disk images (.dsk, .img, .hfv; .iso for CDs).
+
+Wii Remote: point and press A or B to use the mouse, D-Pad for arrow keys, 1 = command, 2 = option, + = type text with the Wii keyboard, - = display mode, HOME = menu. Nunchuk, Classic Controller, GameCube pads and USB keyboards and mice work too.</long_description>
+	<ahb_access/>
+</app>
